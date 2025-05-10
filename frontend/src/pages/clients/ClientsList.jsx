@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { 
-  Container, Typography, Paper, Box, Button, IconButton,
+  Typography, Paper, Box, Button, IconButton,
   Table, TableBody, TableCell, TableContainer, TableHead, 
   TableRow, TablePagination, TextField, InputAdornment,
   Dialog, DialogTitle, DialogContent, DialogActions,
@@ -111,177 +111,367 @@ const ClientsList = () => {
   
   if (loading) {
     return (
-      <Container sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
         <CircularProgress />
-      </Container>
+      </Box>
     );
   }
-  
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Clients
-        </Typography>
-        <Button 
-          variant="contained" 
-          startIcon={<AddIcon />} 
-          component={RouterLink} 
-          to="/clients/new"
-        >
-          Add Client
-        </Button>
+    <Box>
+      {/* Header Section */}
+      <Box 
+        sx={{ 
+          mb: 4, 
+          py: 3,
+          px: { xs: 2, sm: 3, md: 4 },
+          borderBottom: '1px solid rgba(0, 0, 0, 0.06)', 
+          background: 'linear-gradient(to right, rgba(32, 84, 147, 0.05), rgba(32, 84, 147, 0.02))',
+          borderRadius: '12px'
+        }}
+      >
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between', 
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: 2
+        }}>
+          <Box>
+            <Typography 
+              variant="h4" 
+              component="h1" 
+              sx={{ 
+                mb: 0.5, 
+                fontWeight: 600,
+                color: 'text.primary'
+              }}
+            >
+              Clients
+            </Typography>
+            <Typography 
+              variant="subtitle1" 
+              sx={{ color: 'text.secondary' }}
+            >
+              Manage your clients and their associated projects
+            </Typography>
+          </Box>
+          <Button 
+            variant="contained" 
+            startIcon={<AddIcon />} 
+            component={RouterLink} 
+            to="/clients/new"
+            size="medium"
+            sx={{ 
+              px: 3,
+              py: 1,
+              fontWeight: 500,
+              boxShadow: 2
+            }}
+          >
+            Add Client
+          </Button>
+        </Box>
       </Box>
       
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-      
-      <Paper sx={{ width: '100%', mb: 4 }}>
-        <Box sx={{ p: 2 }}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Search clients by name, email, or phone..."
-            value={searchTerm}
-            onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
+      <Box sx={{ px: { xs: 0, sm: 1, md: 2 } }}>
+        {error && (
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mb: 3, 
+              borderRadius: 2,
+              '& .MuiAlert-icon': {
+                color: 'inherit'
+              }
             }}
-          />
-        </Box>
+            variant="filled"
+          >
+            {error}
+          </Alert>
+        )}
         
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Contact</TableCell>
-                <TableCell>Projects</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedClients.length > 0 ? (
-                paginatedClients.map((client) => (
-                  <TableRow key={client.id} hover>
-                    <TableCell>
-                      <Typography variant="subtitle2">
-                        {client.name}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                        {client.email && (
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <EmailIcon fontSize="small" color="action" />
-                            <Typography variant="body2">{client.email}</Typography>
-                          </Box>
-                        )}
-                        {client.phone && (
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <PhoneIcon fontSize="small" color="action" />
-                            <Typography variant="body2">{client.phone}</Typography>
-                          </Box>
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            width: '100%', 
+            mb: 4,
+            borderRadius: 3,
+            border: '1px solid rgba(0,0,0,0.08)',
+            overflow: 'hidden'
+          }}
+        >
+          <Box 
+            sx={{ 
+              p: 3, 
+              borderBottom: '1px solid rgba(0,0,0,0.08)',
+              bgcolor: 'background.paper' 
+            }}
+          >
+            <TextField
+              fullWidth
+              size="medium"
+              variant="outlined"
+              placeholder="Search clients by name, email, or phone..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon color="action" />
+                  </InputAdornment>
+                ),
+                sx: {
+                  borderRadius: 2,
+                  bgcolor: 'background.default'
+                }
+              }}
+            />
+          </Box>
+          
+          <TableContainer sx={{ overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 750 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Client Name</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Contact Information</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Projects</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {paginatedClients.length > 0 ? (
+                  paginatedClients.map((client) => (
+                    <TableRow 
+                      key={client.id} 
+                      hover
+                      sx={{ 
+                        '&:last-child td, &:last-child th': { border: 0 },
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s',
+                        '&:hover': {
+                          bgcolor: 'rgba(32, 84, 147, 0.04)'
+                        }
+                      }}
+                      onClick={() => handleViewClient(client.id)}
+                    >
+                      <TableCell 
+                        sx={{ 
+                          borderLeft: '4px solid transparent',
+                          borderLeftColor: client.projectCount ? 'primary.main' : 'transparent',
+                          py: 2
+                        }}
+                      >
+                        <Typography 
+                          variant="subtitle1" 
+                          sx={{ 
+                            fontWeight: 600,
+                            color: 'text.primary' 
+                          }}
+                        >
+                          {client.name}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                          {client.email && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <EmailIcon fontSize="small" color="primary" sx={{ opacity: 0.8 }} />
+                              <Typography variant="body2">{client.email}</Typography>
+                            </Box>
+                          )}
+                          {client.phone && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <PhoneIcon fontSize="small" color="primary" sx={{ opacity: 0.8 }} />
+                              <Typography variant="body2">{client.phone}</Typography>
+                            </Box>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip 
+                          label={`${client.projectCount || 0} projects`}
+                          size="small"
+                          color={client.projectCount ? "primary" : "default"}
+                          variant={client.projectCount ? "filled" : "outlined"}
+                          sx={{ 
+                            fontWeight: 500,
+                            borderRadius: '6px',
+                            '& .MuiChip-label': {
+                              px: 1.5
+                            }
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell 
+                        align="right"
+                        onClick={(e) => e.stopPropagation()} // Prevent row click when clicking on buttons
+                      >
+                        <Box sx={{ whiteSpace: 'nowrap' }}>
+                          <Tooltip title="View Details">
+                            <IconButton
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewClient(client.id);
+                              }}
+                              size="small"
+                              color="primary"
+                              sx={{ 
+                                mx: 0.5,
+                                '&:hover': { 
+                                  bgcolor: 'rgba(32, 84, 147, 0.08)'
+                                }
+                              }}
+                            >
+                              <ViewIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Edit Client">
+                            <IconButton
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditClient(client.id);
+                              }}
+                              size="small"
+                              color="primary"
+                              sx={{ 
+                                mx: 0.5,
+                                '&:hover': { 
+                                  bgcolor: 'rgba(32, 84, 147, 0.08)'
+                                }
+                              }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete Client">
+                            <IconButton
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(client);
+                              }}
+                              size="small"
+                              color="error"
+                              sx={{ 
+                                mx: 0.5,
+                                '&:hover': { 
+                                  bgcolor: 'rgba(211, 47, 47, 0.08)'
+                                }
+                              }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
+                      <Box sx={{ textAlign: 'center', py: 3 }}>
+                        {searchTerm ? (
+                          <>
+                            <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+                              No clients matching your search
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Try using different keywords or clearing your search
+                            </Typography>
+                          </>
+                        ) : (
+                          <>
+                            <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+                              No clients found
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                              Add your first client to get started
+                            </Typography>
+                            <Button
+                              variant="contained"
+                              startIcon={<AddIcon />}
+                              component={RouterLink}
+                              to="/clients/new"
+                            >
+                              Add Client
+                            </Button>
+                          </>
                         )}
                       </Box>
                     </TableCell>
-                    <TableCell>
-                      <Chip 
-                        label={`${client.projectCount || 0} projects`}
-                        size="small"
-                        color={client.projectCount ? "primary" : "default"}
-                        variant={client.projectCount ? "filled" : "outlined"}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="View Details">
-                        <IconButton
-                          onClick={() => handleViewClient(client.id)}
-                          size="small"
-                          color="primary"
-                        >
-                          <ViewIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Edit">
-                        <IconButton
-                          onClick={() => handleEditClient(client.id)}
-                          size="small"
-                          color="primary"
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton
-                          onClick={() => handleDeleteClick(client)}
-                          size="small"
-                          color="error"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={4} align="center">
-                    {searchTerm 
-                      ? "No clients matching your search" 
-                      : "No clients found. Add your first client!"}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={filteredClients.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Paper>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end',
+            borderTop: '1px solid rgba(0,0,0,0.08)'
+          }}>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25, 50]}
+              component="div"
+              count={filteredClients.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              sx={{
+                '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                  fontSize: '0.875rem'
+                }
+              }}
+            />
+          </Box>
+        </Paper>
+      </Box>
       
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={handleDeleteCancel}
         aria-labelledby="delete-dialog-title"
+        PaperProps={{
+          elevation: 3,
+          sx: {
+            borderRadius: 2
+          }
+        }}
       >
-        <DialogTitle id="delete-dialog-title">
-          Delete Client
+        <DialogTitle id="delete-dialog-title" sx={{ pb: 1 }}>
+          <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+            Delete Client
+          </Typography>
         </DialogTitle>
         <DialogContent>
           {clientToDelete && (
-            <Typography>
-              Are you sure you want to delete the client "{clientToDelete.name}"? 
+            <Typography sx={{ pt: 1 }}>
+              Are you sure you want to delete the client <strong>"{clientToDelete.name}"</strong>? 
               This action cannot be undone.
             </Typography>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteCancel} color="primary">
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button 
+            onClick={handleDeleteCancel} 
+            color="primary"
+            variant="outlined"
+          >
             Cancel
           </Button>
-          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+          <Button 
+            onClick={handleDeleteConfirm} 
+            color="error" 
+            variant="contained"
+            startIcon={<DeleteIcon />}
+            sx={{ ml: 1 }}
+          >
             Delete
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 
