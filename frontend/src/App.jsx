@@ -13,6 +13,11 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
 
+// Client Pages
+import ClientsList from './pages/clients/ClientsList';
+import ClientDetails from './pages/clients/ClientDetails';
+import ClientForm from './pages/clients/ClientForm';
+
 // Create theme
 const theme = createTheme({
   palette: {
@@ -78,8 +83,14 @@ function App() {
                 }
               >
                 <Route index element={<Dashboard />} />
-                {/* Add other routes here as they are created */}
-                {/* <Route path="/clients" element={<Clients />} /> */}
+                
+                {/* Client Routes */}
+                <Route path="/clients" element={<ClientsList />} />
+                <Route path="/clients/new" element={<ClientForm />} />
+                <Route path="/clients/:id" element={<ClientDetails />} />
+                <Route path="/clients/edit/:id" element={<ClientForm />} />
+                
+                {/* Future Routes */}
                 {/* <Route path="/projects" element={<Projects />} /> */}
                 {/* <Route path="/tasks" element={<Tasks />} /> */}
                 {/* <Route path="/resources" element={<Resources />} /> */}

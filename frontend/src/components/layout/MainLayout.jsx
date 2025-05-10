@@ -39,8 +39,7 @@ const MainLayout = () => {
     logout();
     navigate('/login');
   };
-  
-  const menuItems = [
+    const menuItems = [
     { text: 'Dashboard', icon: <Dashboard />, path: '/' },
     { text: 'Clients', icon: <People />, path: '/clients' },
     { text: 'Projects', icon: <Work />, path: '/projects' },

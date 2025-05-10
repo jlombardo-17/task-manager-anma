@@ -90,6 +90,11 @@ export const projectsAPI = {
     return response.data;
   },
   
+  getByClientId: async (clientId) => {
+    const response = await api.get(`/projects/client/${clientId}`);
+    return response.data;
+  },
+  
   getById: async (id) => {
     const response = await api.get(`/projects/${id}`);
     return response.data;
