@@ -372,10 +372,9 @@ const Dashboard = () => {
                 </Typography>
               </Box>
               <Divider sx={{ mb: 3 }} />
-              
-              {dashboardData.projectsByStatus.length > 0 ? (
-                <ResponsiveContainer width="100%" height={320}>
-                  <PieChart>
+                {dashboardData.projectsByStatus.length > 0 ? (
+                <ResponsiveContainer width="100%" height={320} minHeight={250} maxHeight={400}>
+                  <PieChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
                     <Pie
                       data={dashboardData.projectsByStatus}
                       cx="50%"
@@ -435,10 +434,9 @@ const Dashboard = () => {
                 </Typography>
               </Box>
               <Divider sx={{ mb: 3 }} />
-              
-              {dashboardData.tasksByPriority.length > 0 ? (
-                <ResponsiveContainer width="100%" height={320}>
-                  <BarChart data={dashboardData.tasksByPriority}>
+                {dashboardData.tasksByPriority.length > 0 ? (
+                <ResponsiveContainer width="100%" height={320} minHeight={250} maxHeight={400}>
+                  <BarChart data={dashboardData.tasksByPriority} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
                     <XAxis 
                       dataKey="name"
