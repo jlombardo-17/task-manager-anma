@@ -117,16 +117,17 @@ const ClientsList = () => {
     );
   }
   return (
-    <Box>
+    <Box sx={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
       {/* Header Section */}
       <Box 
         sx={{ 
           mb: 4, 
           py: 3,
-          px: { xs: 2, sm: 3, md: 4 },
+          px: { xs: 2, sm: 3, md: 4 }, 
           borderBottom: '1px solid rgba(0, 0, 0, 0.06)', 
           background: 'linear-gradient(to right, rgba(32, 84, 147, 0.05), rgba(32, 84, 147, 0.02))',
-          borderRadius: '12px'
+          borderRadius: '12px',
+          width: '100%'
         }}
       >
         <Box sx={{ 
@@ -173,7 +174,7 @@ const ClientsList = () => {
         </Box>
       </Box>
       
-      <Box sx={{ px: { xs: 0, sm: 1, md: 2 } }}>
+      <Box sx={{ px: { xs: 0, sm: 1, md: 2 }, width: '100%', boxSizing: 'border-box' }}>
         {error && (
           <Alert 
             severity="error" 
@@ -188,16 +189,15 @@ const ClientsList = () => {
           >
             {error}
           </Alert>
-        )}
-        
-        <Paper 
+        )}          <Paper 
           elevation={0} 
           sx={{ 
             width: '100%', 
             mb: 4,
             borderRadius: 3,
             border: '1px solid rgba(0,0,0,0.08)',
-            overflow: 'hidden'
+            overflow: 'auto', // Changed from 'hidden' to 'auto' to allow scrolling if needed
+            boxSizing: 'border-box'
           }}
         >
           <Box 
@@ -227,9 +227,8 @@ const ClientsList = () => {
               }}
             />
           </Box>
-          
-          <TableContainer sx={{ overflowX: 'auto' }}>
-            <Table sx={{ minWidth: 750 }}>
+            <TableContainer sx={{ overflowX: 'auto', width: '100%' }}>
+            <Table sx={{ width: '100%' }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Client Name</TableCell>

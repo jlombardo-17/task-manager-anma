@@ -168,15 +168,17 @@ const Dashboard = () => {
   }
   
   return (
-    <Box>
+    <Box sx={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
       {/* Header with welcome message */}
       <Box 
         sx={{ 
-          mb: 4,          py: 3,
+          mb: 4, 
+          py: 3,
           px: { xs: 2, sm: 3, md: 4 }, 
           borderBottom: '1px solid rgba(0, 0, 0, 0.06)', 
           background: 'linear-gradient(to right, rgba(32, 84, 147, 0.05), rgba(32, 84, 147, 0.02))',
-          borderRadius: '12px'
+          borderRadius: '12px',
+          width: '100%'
         }}
       >
         <Typography 
@@ -198,9 +200,8 @@ const Dashboard = () => {
           Welcome back! Here's a summary of your tasks, projects and clients. Track your progress and manage your workflow efficiently.
         </Typography>
       </Box>
-      
-      {/* Main Content */}
-      <Box sx={{ px: { xs: 0, sm: 1, md: 2 } }}>
+        {/* Main Content */}
+      <Box sx={{ px: { xs: 0, sm: 1, md: 2 }, width: '100%', boxSizing: 'border-box' }}>
         {/* Summary Cards */}
         <Grid container spacing={3} sx={{ mb: 5 }}>
           <Grid item xs={12} sm={6} md={3}>

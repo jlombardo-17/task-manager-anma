@@ -234,8 +234,7 @@ const MainLayout = () => {
           </Box>
         </Box>
       </Drawer>
-      
-      <Box
+        <Box
         component="main"
         sx={{
           flexGrow: 1,
@@ -243,7 +242,9 @@ const MainLayout = () => {
           flexDirection: 'column',
           overflow: 'hidden',
           bgcolor: 'background.default',
-          minHeight: '100vh'
+          minHeight: '100vh',
+          width: '100%', // Asegura que utiliza el 100% del ancho disponible
+          maxWidth: '100vw' // No exceder el ancho visible
         }}
       >
         <Toolbar sx={{ minHeight: { xs: '64px', sm: '70px' } }} /> {/* Matching AppBar height */}
@@ -252,9 +253,9 @@ const MainLayout = () => {
           sx={{ 
             flexGrow: 1, 
             overflow: 'auto', 
-            p: { xs: 2, sm: 3 },
+            p: { xs: 1, sm: 2, md: 3 },
             width: '100%',
-            // Sin restricciones de ancho máximo
+            boxSizing: 'border-box' // Asegura que el padding no añada al ancho total
           }}
         >
           <Outlet />

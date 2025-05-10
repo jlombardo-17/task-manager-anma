@@ -256,9 +256,8 @@ const ClientDetails = () => {
                       New Project
                     </Button>
                   </Box>
-                  
-                  <TableContainer>
-                    <Table>
+                    <TableContainer sx={{ overflowX: 'auto', width: '100%' }}>
+                    <Table sx={{ width: '100%' }}>
                       <TableHead>
                         <TableRow>
                           <TableCell>Name</TableCell>

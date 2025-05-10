@@ -20,6 +20,25 @@ import ClientForm from './pages/clients/ClientForm';
 
 // Create theme - Enhanced professional theme for accountants
 const theme = createTheme({
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        html: {
+          boxSizing: 'border-box',
+          width: '100%',
+          maxWidth: '100%',
+          overflowX: 'hidden'
+        },
+        body: {
+          margin: 0,
+          padding: 0,
+          width: '100%',
+          maxWidth: '100%',
+          overflowX: 'hidden'
+        }
+      }
+    }
+  },
   palette: {
     primary: {
       light: '#5682c4',
@@ -260,6 +279,10 @@ const theme = createTheme({
         root: {
           borderRadius: 8,
           boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.05)',
+          width: '100%',
+          overflowX: 'auto',
+          maxWidth: '100%',
+          boxSizing: 'border-box'
         },
       },
     },
