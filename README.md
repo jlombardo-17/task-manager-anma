@@ -2,6 +2,8 @@
 
 A full-stack task management application for client projects.
 
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/jlombardo-17/task-manager-anma)
+
 ## Features
 
 - **Client Management**: Create and manage clients
