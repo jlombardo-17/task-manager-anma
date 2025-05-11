@@ -8,9 +8,19 @@ class Task {
    * Create a new task
    * @param {Object} task - Task data
    * @returns {Promise} - Created task
-   */
-  static async create(task) {
+   */  static async create(task) {
     try {
+      // Debug log to help identify issues with incoming data
+      console.log('Creating task with data:', {
+        project_id: task.project_id,
+        title: task.title,
+        start_date: task.start_date,
+        end_date: task.end_date,
+        estimated_hours: task.estimated_hours,
+        hours_spent: task.hours_spent,
+        resources: task.resources
+      });
+      
       // Begin transaction
       const connection = await pool.getConnection();
       await connection.beginTransaction();
@@ -36,15 +46,20 @@ class Task {
         );
         
         const taskId = result.insertId;
-        
-        // Assign resources if provided
+          // Assign resources if provided
         if (task.resources && task.resources.length > 0) {
-          const values = task.resources.map(resourceId => [taskId, resourceId]);
-          
-          await connection.query(
-            'INSERT INTO task_resources (task_id, resource_id) VALUES ?',
-            [values]
-          );
+          try {
+            console.log('Assigning resources:', task.resources);
+            const values = task.resources.map(resourceId => [taskId, resourceId, 0]); // Adding default assigned_hours
+            
+            await connection.query(
+              'INSERT INTO task_resources (task_id, resource_id, assigned_hours) VALUES ?',
+              [values]
+            );
+          } catch (resourceError) {
+            console.error('Error assigning resources to task:', resourceError);
+            throw new Error(`Failed to assign resources: ${resourceError.message}`);
+          }
         }
         
         await connection.commit();

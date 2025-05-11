@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import { 
   Typography, Paper, Box, Button, IconButton,
   Table, TableBody, TableCell, TableContainer, TableHead, 
@@ -27,9 +27,9 @@ import { tasksAPI, projectsAPI, resourcesAPI } from '../../services/api';
 const TasksList = () => {
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [resources, setResources] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [resources, setResources] = useState([]);  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [projectFilter, setProjectFilter] = useState('');
@@ -44,12 +44,28 @@ const TasksList = () => {
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   
   const navigate = useNavigate();
-  
-  useEffect(() => {
+  const location = useLocation();
+    useEffect(() => {
     fetchTasks();
     fetchProjects();
     fetchResources();
   }, []);
+  
+  // Efecto para capturar mensajes de éxito desde la redirección
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      setSuccessMessage(location.state.successMessage);
+      
+      // Limpiar el mensaje después de 5 segundos
+      const timer = setTimeout(() => {
+        setSuccessMessage(null);
+        // Limpiar el estado de ubicación para que el mensaje no persista en recargas
+        navigate(location.pathname, { replace: true });
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [location, navigate]);
   
   const fetchTasks = async () => {
     try {
@@ -284,8 +300,24 @@ const TasksList = () => {
           </Button>
         </Box>
       </Box>
-      
-      <Box sx={{ px: { xs: 0, sm: 1, md: 2 }, width: '100%', boxSizing: 'border-box' }}>
+        <Box sx={{ px: { xs: 0, sm: 1, md: 2 }, width: '100%', boxSizing: 'border-box' }}>
+        {successMessage && (
+          <Alert 
+            severity="success" 
+            sx={{ 
+              mb: 3, 
+              borderRadius: 2,
+              '& .MuiAlert-icon': {
+                color: 'inherit'
+              }
+            }}
+            variant="filled"
+            onClose={() => setSuccessMessage(null)}
+          >
+            {successMessage}
+          </Alert>
+        )}
+        
         {error && (
           <Alert 
             severity="error" 

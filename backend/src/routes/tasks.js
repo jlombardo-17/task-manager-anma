@@ -103,20 +103,81 @@ router.post(
     body('end_date').isDate().withMessage('Valid end date is required'),
     body('estimated_hours').isFloat({ min: 0 }).withMessage('Estimated hours must be a positive number'),
     body('resources').optional().isArray().withMessage('Resources must be an array')
-  ],
-  async (req, res) => {
+  ],  async (req, res) => {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      console.log('Validation errors:', errors.array());
+      return res.status(400).json({ 
+        message: 'Validation failed. Please check your inputs.',
+        errors: errors.array() 
+      });
     }
 
     try {
-      const newTask = await Task.create(req.body);
+      // Process the task data
+      const taskData = { ...req.body };
+      
+      // Format dates properly
+      if (taskData.start_date) {
+        try {
+          taskData.start_date = new Date(taskData.start_date).toISOString().split('T')[0];
+        } catch (err) {
+          return res.status(400).json({ 
+            message: 'Invalid start date format',
+            errors: [{ param: 'start_date', msg: 'Invalid date format' }] 
+          });
+        }
+      }
+      
+      if (taskData.end_date) {
+        try {
+          taskData.end_date = new Date(taskData.end_date).toISOString().split('T')[0];
+        } catch (err) {
+          return res.status(400).json({ 
+            message: 'Invalid end date format',
+            errors: [{ param: 'end_date', msg: 'Invalid date format' }] 
+          });
+        }
+      }
+      
+      // Validate that end date is after start date
+      if (new Date(taskData.end_date) <= new Date(taskData.start_date)) {
+        return res.status(400).json({
+          message: 'End date must be after start date',
+          errors: [{ param: 'end_date', msg: 'End date must be after start date' }]
+        });
+      }
+
+      const newTask = await Task.create(taskData);
       res.status(201).json(newTask);
     } catch (error) {
       console.error('Error creating task:', error);
-      res.status(500).json({ message: 'Server error' });
+      
+      // More specific error messages based on error types
+      if (error.code === 'ER_NO_DEFAULT_FOR_FIELD') {
+        return res.status(400).json({ 
+          message: 'Missing required field in task data',
+          details: error.sqlMessage
+        });
+      } else if (error.code === 'ER_BAD_NULL_ERROR') {
+        return res.status(400).json({ 
+          message: 'Field cannot be null',
+          details: error.sqlMessage
+        });
+      } else if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+        return res.status(400).json({ 
+          message: 'The referenced project or resource does not exist',
+          details: error.sqlMessage
+        });
+      } else if (error.code && error.code.startsWith('ER_')) {
+        return res.status(400).json({ 
+          message: 'Database error',
+          details: error.sqlMessage
+        });
+      }
+      
+      res.status(500).json({ message: 'Server error', details: error.message });
     }
   }
 );
@@ -137,12 +198,15 @@ router.put(
     body('estimated_hours').isFloat({ min: 0 }).withMessage('Estimated hours must be a positive number'),
     body('hours_spent').isFloat({ min: 0 }).withMessage('Hours spent must be a positive number'),
     body('resources').optional().isArray().withMessage('Resources must be an array')
-  ],
-  async (req, res) => {
+  ],  async (req, res) => {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      console.log('Validation errors during update:', errors.array());
+      return res.status(400).json({ 
+        message: 'Validation failed. Please check your inputs.',
+        errors: errors.array() 
+      });
     }
 
     try {
@@ -152,11 +216,69 @@ router.put(
         return res.status(404).json({ message: 'Task not found' });
       }
       
-      const updatedTask = await Task.update(req.params.id, req.body);
+      // Process the task data
+      const taskData = { ...req.body };
+      
+      // Format dates properly
+      if (taskData.start_date) {
+        try {
+          taskData.start_date = new Date(taskData.start_date).toISOString().split('T')[0];
+        } catch (err) {
+          return res.status(400).json({ 
+            message: 'Invalid start date format',
+            errors: [{ param: 'start_date', msg: 'Invalid date format' }] 
+          });
+        }
+      }
+      
+      if (taskData.end_date) {
+        try {
+          taskData.end_date = new Date(taskData.end_date).toISOString().split('T')[0];
+        } catch (err) {
+          return res.status(400).json({ 
+            message: 'Invalid end date format',
+            errors: [{ param: 'end_date', msg: 'Invalid date format' }] 
+          });
+        }
+      }
+      
+      // Validate that end date is after start date
+      if (new Date(taskData.end_date) <= new Date(taskData.start_date)) {
+        return res.status(400).json({
+          message: 'End date must be after start date',
+          errors: [{ param: 'end_date', msg: 'End date must be after start date' }]
+        });
+      }
+      
+      const updatedTask = await Task.update(req.params.id, taskData);
       res.json(updatedTask);
     } catch (error) {
       console.error(`Error updating task with ID ${req.params.id}:`, error);
-      res.status(500).json({ message: 'Server error' });
+      
+      // More specific error messages based on error types
+      if (error.code === 'ER_NO_DEFAULT_FOR_FIELD') {
+        return res.status(400).json({ 
+          message: 'Missing required field in task data',
+          details: error.sqlMessage
+        });
+      } else if (error.code === 'ER_BAD_NULL_ERROR') {
+        return res.status(400).json({ 
+          message: 'Field cannot be null',
+          details: error.sqlMessage
+        });
+      } else if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+        return res.status(400).json({ 
+          message: 'The referenced project or resource does not exist',
+          details: error.sqlMessage
+        });
+      } else if (error.code && error.code.startsWith('ER_')) {
+        return res.status(400).json({ 
+          message: 'Database error',
+          details: error.sqlMessage
+        });
+      }
+      
+      res.status(500).json({ message: 'Server error', details: error.message });
     }
   }
 );

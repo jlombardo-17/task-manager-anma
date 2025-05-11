@@ -136,13 +136,23 @@ const TaskForm = () => {
       setErrors({ ...errors, [name]: null });
     }
   };
-  
-  const handleDateChange = (name, date) => {
-    setFormData({ ...formData, [name]: date });
+    const handleDateChange = (name, date) => {
+    // Ensure we have a valid date object or null
+    const validDate = date ? new Date(date) : null;
+    setFormData({ ...formData, [name]: validDate });
     
     // Clear error for this field if any
     if (errors[name]) {
       setErrors({ ...errors, [name]: null });
+    }
+    
+    // If changing start date, check if we need to validate end date
+    if (name === 'start_date' && formData.end_date) {
+      if (validDate && new Date(formData.end_date) <= validDate) {
+        setErrors({ ...errors, end_date: 'End date must be after start date' });
+      } else if (errors.end_date === 'End date must be after start date') {
+        setErrors({ ...errors, end_date: null });
+      }
     }
   };
   
@@ -209,9 +219,16 @@ const TaskForm = () => {
     try {
       setSubmitting(true);
       setServerError(null);
-      
+        // Format dates properly for the API
+      const formattedStartDate = formData.start_date ? 
+        new Date(formData.start_date).toISOString().split('T')[0] : null;
+      const formattedEndDate = formData.end_date ? 
+        new Date(formData.end_date).toISOString().split('T')[0] : null;
+        
       const taskData = {
         ...formData,
+        start_date: formattedStartDate,
+        end_date: formattedEndDate,
         estimated_hours: parseFloat(formData.estimated_hours),
         hours_spent: parseFloat(formData.hours_spent || 0),
         resources: formData.resources || []
@@ -223,20 +240,49 @@ const TaskForm = () => {
         savedTask = await tasksAPI.update(id, taskData);
       } else {
         savedTask = await tasksAPI.create(taskData);
+      }      // Mostrar mensaje de éxito a través del estado de ubicación
+      const successMessage = isEditing 
+        ? `La tarea "${savedTask.title}" ha sido actualizada correctamente.` 
+        : `La tarea "${savedTask.title}" ha sido creada correctamente.`;
+      
+      // Siempre redireccionar a la lista de tareas con mensaje de éxito
+      navigate('/tasks', { 
+        state: { 
+          successMessage: successMessage,
+          taskCreated: true,
+          taskId: savedTask.id
+        } 
+      });} catch (error) {
+      console.error('Error saving task:', error);
+      
+      // Enhanced error handling with more detailed messages
+      let errorMessage = 'Failed to save task. Please check your inputs and try again.';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors && error.response.data.errors.length > 0) {
+        // Format validation errors from the backend
+        const validationErrors = error.response.data.errors.map(e => e.msg).join(', ');
+        errorMessage = `Validation errors: ${validationErrors}`;
+        
+        // Also update the form errors to highlight problem fields
+        const fieldErrors = {};
+        error.response.data.errors.forEach(err => {
+          const fieldName = err.param;
+          if (fieldName) {
+            fieldErrors[fieldName] = err.msg;
+          }
+        });
+        
+        if (Object.keys(fieldErrors).length > 0) {
+          setErrors(prev => ({ ...prev, ...fieldErrors }));
+        }
+      } else if (error.message) {
+        errorMessage = `Error: ${error.message}`;
       }
       
-      // Navigate back to the project details or task list
-      if (formData.project_id) {
-        navigate(`/projects/${formData.project_id}`);
-      } else {
-        navigate('/tasks');
-      }
-    } catch (error) {
-      console.error('Error saving task:', error);
-      setServerError(
-        error.response?.data?.message || 
-        'Failed to save task. Please check your inputs and try again.'
-      );
+      setServerError(errorMessage);
+      console.log('Task data sent:', taskData); // For debugging
       
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
@@ -305,8 +351,7 @@ const TaskForm = () => {
         </Box>
       </Box>
       
-      <Box sx={{ px: { xs: 0, sm: 1, md: 2 }, width: '100%', boxSizing: 'border-box' }}>
-        {serverError && (
+      <Box sx={{ px: { xs: 0, sm: 1, md: 2 }, width: '100%', boxSizing: 'border-box' }}>        {serverError && (
           <Alert 
             severity="error" 
             sx={{ 
@@ -314,11 +359,31 @@ const TaskForm = () => {
               borderRadius: 2,
               '& .MuiAlert-icon': {
                 color: 'inherit'
+              },
+              '& .MuiAlert-message': {
+                fontWeight: 500
               }
             }}
             variant="filled"
+            action={
+              <IconButton
+                aria-label="close"
+                color="inherit"
+                size="small"
+                onClick={() => setServerError(null)}
+              >
+                <CloseIcon fontSize="inherit" />
+              </IconButton>
+            }
           >
-            {serverError}
+            <Typography variant="subtitle1" component="div">
+              {serverError}
+            </Typography>
+            {serverError.includes("Validation errors:") && (
+              <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+                Please check the highlighted fields below.
+              </Typography>
+            )}
           </Alert>
         )}
         
@@ -392,17 +457,17 @@ const TaskForm = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              
-              <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={6}>
                 <DatePicker
                   label="Start Date"
                   value={formData.start_date}
                   onChange={(date) => handleDateChange('start_date', date)}
+                  format="yyyy-MM-dd"
                   slotProps={{
                     textField: {
                       fullWidth: true,
                       error: !!errors.start_date,
-                      helperText: errors.start_date,
+                      helperText: errors.start_date || 'Format: YYYY-MM-DD',
                       required: true
                     }
                   }}
@@ -414,11 +479,13 @@ const TaskForm = () => {
                   label="End Date"
                   value={formData.end_date}
                   onChange={(date) => handleDateChange('end_date', date)}
+                  format="yyyy-MM-dd"
+                  minDate={formData.start_date || undefined}
                   slotProps={{
                     textField: {
                       fullWidth: true,
                       error: !!errors.end_date,
-                      helperText: errors.end_date,
+                      helperText: errors.end_date || 'Format: YYYY-MM-DD',
                       required: true
                     }
                   }}
