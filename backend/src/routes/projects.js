@@ -75,24 +75,77 @@ router.post(
     body('name').not().isEmpty().withMessage('Name is required'),
     body('client_id').isInt().withMessage('Valid client ID is required'),
     body('start_date').isDate().withMessage('Valid start date is required'),
-    body('end_date').isDate().withMessage('Valid end date is required'),
+    body('end_date').isDate().withMessage('Valid end date is required')
+      .custom((endDate, { req }) => {
+        if (new Date(endDate) <= new Date(req.body.start_date)) {
+          throw new Error('End date must be after start date');
+        }
+        return true;
+      }),
     body('estimated_hours').isFloat({ min: 0 }).withMessage('Estimated hours must be a positive number'),
     body('estimated_cost').isFloat({ min: 0 }).withMessage('Estimated cost must be a positive number'),
-    body('budgeted_cost').optional().isFloat({ min: 0 }).withMessage('Budgeted cost must be a positive number if provided')
-  ],
-  async (req, res) => {
+    body('budgeted_cost').optional({ nullable: true }).isFloat({ min: 0 }).withMessage('Budgeted cost must be a positive number if provided')
+  ],  async (req, res) => {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      console.log('Validation errors:', errors.array());
+      return res.status(400).json({ 
+        message: 'Validation failed. Please check your input.', 
+        errors: errors.array() 
+      });
     }
-
+    
     try {
-      const newProject = await Project.create(req.body);
+      // Process the project data
+      const projectData = { ...req.body };
+      
+      // Ensure budgeted_cost is properly handled as optional
+      if (projectData.budgeted_cost === '' || projectData.budgeted_cost === undefined) {
+        projectData.budgeted_cost = null;
+      }
+      
+      // Check date formats
+      if (projectData.start_date) {
+        try {
+          projectData.start_date = new Date(projectData.start_date).toISOString().split('T')[0];
+        } catch (err) {
+          return res.status(400).json({ message: 'Invalid start date format' });
+        }
+      }
+      
+      if (projectData.end_date) {
+        try {
+          projectData.end_date = new Date(projectData.end_date).toISOString().split('T')[0];
+        } catch (err) {
+          return res.status(400).json({ message: 'Invalid end date format' });
+        }
+      }
+      
+      const newProject = await Project.create(projectData);
       res.status(201).json(newProject);
     } catch (error) {
       console.error('Error creating project:', error);
-      res.status(500).json({ message: 'Server error' });
+      
+      // Manejar diferentes tipos de errores
+      if (error.code === 'ER_NO_DEFAULT_FOR_FIELD') {
+        return res.status(400).json({ 
+          message: 'Missing required field in project data',
+          details: error.sqlMessage
+        });
+      } else if (error.code === 'ER_BAD_NULL_ERROR') {
+        return res.status(400).json({ 
+          message: 'Field cannot be null',
+          details: error.sqlMessage
+        });
+      } else if (error.code && error.code.startsWith('ER_')) {
+        return res.status(400).json({ 
+          message: 'Database error',
+          details: error.sqlMessage
+        });
+      }
+      
+      res.status(500).json({ message: 'Server error', details: error.message });
     }
   }
 );
@@ -109,19 +162,28 @@ router.put(
     body('name').not().isEmpty().withMessage('Name is required'),
     body('client_id').isInt().withMessage('Valid client ID is required'),
     body('start_date').isDate().withMessage('Valid start date is required'),
-    body('end_date').isDate().withMessage('Valid end date is required'),
+    body('end_date').isDate().withMessage('Valid end date is required')
+      .custom((endDate, { req }) => {
+        if (new Date(endDate) <= new Date(req.body.start_date)) {
+          throw new Error('End date must be after start date');
+        }
+        return true;
+      }),
     body('estimated_hours').isFloat({ min: 0 }).withMessage('Estimated hours must be a positive number'),
     body('estimated_cost').isFloat({ min: 0 }).withMessage('Estimated cost must be a positive number'),
-    body('budgeted_cost').isFloat({ min: 0 }).withMessage('Budgeted cost must be a positive number'),
+    body('budgeted_cost').optional({ nullable: true }).isFloat({ min: 0 }).withMessage('Budgeted cost must be a positive number if provided'),
     body('actual_cost').isFloat({ min: 0 }).optional().withMessage('Actual cost must be a positive number')
-  ],
-  async (req, res) => {
+  ],  async (req, res) => {
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      console.log('Validation errors during update:', errors.array());
+      return res.status(400).json({ 
+        message: 'Validation failed. Please check your input.', 
+        errors: errors.array() 
+      });
     }
-
+    
     try {
       const project = await Project.findById(req.params.id);
       
@@ -129,11 +191,55 @@ router.put(
         return res.status(404).json({ message: 'Project not found' });
       }
       
-      const updatedProject = await Project.update(req.params.id, req.body);
+      // Process the project data
+      const projectData = { ...req.body };
+      
+      // Ensure budgeted_cost is properly handled as optional
+      if (projectData.budgeted_cost === '' || projectData.budgeted_cost === undefined) {
+        projectData.budgeted_cost = null;
+      }
+      
+      // Check date formats
+      if (projectData.start_date) {
+        try {
+          projectData.start_date = new Date(projectData.start_date).toISOString().split('T')[0];
+        } catch (err) {
+          return res.status(400).json({ message: 'Invalid start date format' });
+        }
+      }
+      
+      if (projectData.end_date) {
+        try {
+          projectData.end_date = new Date(projectData.end_date).toISOString().split('T')[0];
+        } catch (err) {
+          return res.status(400).json({ message: 'Invalid end date format' });
+        }
+      }
+      
+      const updatedProject = await Project.update(req.params.id, projectData);
       res.json(updatedProject);
     } catch (error) {
       console.error(`Error updating project with ID ${req.params.id}:`, error);
-      res.status(500).json({ message: 'Server error' });
+      
+      // Manejar diferentes tipos de errores
+      if (error.code === 'ER_NO_DEFAULT_FOR_FIELD') {
+        return res.status(400).json({ 
+          message: 'Missing required field in project data',
+          details: error.sqlMessage
+        });
+      } else if (error.code === 'ER_BAD_NULL_ERROR') {
+        return res.status(400).json({ 
+          message: 'Field cannot be null',
+          details: error.sqlMessage
+        });
+      } else if (error.code && error.code.startsWith('ER_')) {
+        return res.status(400).json({ 
+          message: 'Database error',
+          details: error.sqlMessage
+        });
+      }
+      
+      res.status(500).json({ message: 'Server error', details: error.message });
     }
   }
 );

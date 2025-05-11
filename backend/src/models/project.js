@@ -12,9 +12,7 @@ class Project {
     try {
       // Start transaction
       const connection = await pool.getConnection();
-      await connection.beginTransaction();
-
-      try {
+      await connection.beginTransaction();      try {
         // Insert project
         const [result] = await connection.query(
           `INSERT INTO projects 
@@ -27,7 +25,7 @@ class Project {
             project.end_date,
             project.estimated_hours,
             project.estimated_cost,
-            project.budgeted_cost,
+            project.budgeted_cost === null || project.budgeted_cost === undefined ? null : project.budgeted_cost,
             project.actual_cost || 0,
             project.description,
             project.status || 'pending'
@@ -118,13 +116,13 @@ class Project {
       throw error;
     }
   }
-
   /**
    * Update project
    * @param {number} id - Project ID
    * @param {Object} projectData - New project data
    * @returns {Promise} - Updated project
-   */  static async update(id, projectData) {
+   */
+  static async update(id, projectData) {
     try {
       // Start transaction
       const connection = await pool.getConnection();
@@ -145,10 +143,10 @@ class Project {
             projectData.end_date,
             projectData.estimated_hours,
             projectData.estimated_cost,
-            projectData.budgeted_cost,
-            projectData.actual_cost,
+            projectData.budgeted_cost === null || projectData.budgeted_cost === undefined ? null : projectData.budgeted_cost,
+            projectData.actual_cost || 0,
             projectData.description,
-            projectData.status,
+            projectData.status || 'pending',
             id
           ]
         );

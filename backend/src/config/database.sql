@@ -53,7 +53,7 @@ CREATE TABLE projects (
   end_date DATE NOT NULL,
   estimated_hours DECIMAL(10, 2) NOT NULL,
   estimated_cost DECIMAL(15, 2) NOT NULL,
-  budgeted_cost DECIMAL(15, 2) NOT NULL,
+  budgeted_cost DECIMAL(15, 2) DEFAULT NULL,
   actual_cost DECIMAL(15, 2) DEFAULT 0,
   description TEXT,
   status ENUM('pending', 'in_progress', 'completed', 'on_hold', 'cancelled') DEFAULT 'pending',

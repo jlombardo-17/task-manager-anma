@@ -104,24 +104,43 @@ const ProjectForm = () => {
       console.error('Error fetching resources:', error);
       setServerError('Failed to load resources. Please try again later.');
     }
-  };
-  
-  const handleChange = (e) => {
+  };    const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    
+    // Handle numeric fields - budgeted_cost can be null
+    if (name === 'budgeted_cost') {
+      if (value === '') {
+        setFormData({ ...formData, [name]: null });
+      } else {
+        const numericValue = parseFloat(value);
+        setFormData({ ...formData, [name]: isNaN(numericValue) ? null : numericValue });
+      }
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
     
     // Clear error for this field if any
     if (errors[name]) {
       setErrors({ ...errors, [name]: null });
     }
   };
-  
-  const handleDateChange = (name, date) => {
-    setFormData({ ...formData, [name]: date });
+    const handleDateChange = (name, date) => {
+    // Ensure we have a valid date object or null
+    const validDate = date ? new Date(date) : null;
+    setFormData({ ...formData, [name]: validDate });
     
     // Clear error for this field if any
     if (errors[name]) {
       setErrors({ ...errors, [name]: null });
+    }
+    
+    // If changing start date, check if we need to validate end date
+    if (name === 'start_date' && formData.end_date) {
+      if (validDate && new Date(formData.end_date) <= validDate) {
+        setErrors({ ...errors, end_date: 'End date must be after start date' });
+      } else if (errors.end_date === 'End date must be after start date') {
+        setErrors({ ...errors, end_date: null });
+      }
     }
   };
   
@@ -149,7 +168,7 @@ const ProjectForm = () => {
   const handleRemoveResource = (id) => {
     setSelectedResources(selectedResources.filter(resource => resource.id !== id));
   };
-    const validateForm = () => {
+  const validateForm = () => {
     const newErrors = {};
     
     // Basic validation
@@ -161,13 +180,14 @@ const ProjectForm = () => {
       newErrors.client_id = 'Please select a client';
     }
     
+    // Date validation
     if (!formData.start_date) {
       newErrors.start_date = 'Start date is required';
     }
     
     if (!formData.end_date) {
       newErrors.end_date = 'End date is required';
-    } else if (formData.start_date && formData.end_date && formData.start_date > formData.end_date) {
+    } else if (formData.start_date && formData.end_date && new Date(formData.start_date) >= new Date(formData.end_date)) {
       newErrors.end_date = 'End date must be after start date';
     }
     
@@ -179,16 +199,15 @@ const ProjectForm = () => {
       newErrors.estimated_cost = 'Please provide a valid estimated cost';
     }
     
-    // Budgeted cost is now optional
-    if (formData.budgeted_cost && formData.budgeted_cost < 0) {
+    // Budgeted cost is optional - only validate if a value is provided
+    if (formData.budgeted_cost !== null && formData.budgeted_cost !== undefined && formData.budgeted_cost !== '' && parseFloat(formData.budgeted_cost) < 0) {
       newErrors.budgeted_cost = 'Budgeted cost must be a positive number if provided';
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
-  const handleSubmit = async (e) => {
+    const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -205,8 +224,17 @@ const ProjectForm = () => {
     try {
       setSubmitting(true);
       setServerError(null);
-        const projectData = {
+      
+      // Format dates properly for the API
+      const formattedStartDate = formData.start_date ? 
+        new Date(formData.start_date).toISOString().split('T')[0] : null;
+      const formattedEndDate = formData.end_date ? 
+        new Date(formData.end_date).toISOString().split('T')[0] : null;
+        
+      const projectData = {
         ...formData,
+        start_date: formattedStartDate,
+        end_date: formattedEndDate,
         estimated_hours: parseFloat(formData.estimated_hours),
         estimated_cost: parseFloat(formData.estimated_cost),
         budgeted_cost: formData.budgeted_cost ? parseFloat(formData.budgeted_cost) : null,
@@ -226,13 +254,22 @@ const ProjectForm = () => {
       }
       
       // Navigate back to the project list or project details
-      navigate(isEditing ? `/projects/${id}` : '/projects');
-    } catch (error) {
+      navigate(isEditing ? `/projects/${id}` : '/projects');    } catch (error) {
       console.error('Error saving project:', error);
-      setServerError(
-        error.response?.data?.message || 
-        'Failed to save project. Please check your inputs and try again.'
-      );
+      
+      // Mostrar información más detallada sobre el error
+      let errorMessage = 'Failed to save project. Please check your inputs and try again.';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors && error.response.data.errors.length > 0) {
+        errorMessage = `Validation errors: ${error.response.data.errors.map(e => e.msg).join(', ')}`;
+      } else if (error.message) {
+        errorMessage = `Error: ${error.message}`;
+      }
+      
+      setServerError(errorMessage);
+      console.log('Project data sent:', projectData); // Para depuración
       
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
@@ -368,17 +405,17 @@ const ProjectForm = () => {
                   {errors.client_id && <FormHelperText>{errors.client_id}</FormHelperText>}
                 </FormControl>
               </Grid>
-              
-              <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={6}>
                 <DatePicker
                   label="Start Date"
                   value={formData.start_date}
                   onChange={(date) => handleDateChange('start_date', date)}
+                  format="yyyy-MM-dd" 
                   slotProps={{
                     textField: {
                       fullWidth: true,
                       error: !!errors.start_date,
-                      helperText: errors.start_date,
+                      helperText: errors.start_date || 'Format: YYYY-MM-DD',
                       required: true
                     }
                   }}
@@ -390,11 +427,13 @@ const ProjectForm = () => {
                   label="End Date"
                   value={formData.end_date}
                   onChange={(date) => handleDateChange('end_date', date)}
+                  format="yyyy-MM-dd"
+                  minDate={formData.start_date || undefined}
                   slotProps={{
                     textField: {
                       fullWidth: true,
                       error: !!errors.end_date,
-                      helperText: errors.end_date,
+                      helperText: errors.end_date || 'Format: YYYY-MM-DD',
                       required: true
                     }
                   }}
@@ -491,16 +530,15 @@ const ProjectForm = () => {
                   }}
                 />
               </Grid>
-                <Grid item xs={12} sm={4}>
-                <TextField
+                <Grid item xs={12} sm={4}>                <TextField
                   fullWidth
                   label="Budgeted Cost (opcional)"
                   name="budgeted_cost"
                   type="number"
-                  value={formData.budgeted_cost || ''}
+                  value={formData.budgeted_cost === null ? '' : formData.budgeted_cost}
                   onChange={handleChange}
                   error={!!errors.budgeted_cost}
-                  helperText={errors.budgeted_cost || 'Puede completarse más adelante'}
+                  helperText={errors.budgeted_cost || 'Opcional - Puede completarse más adelante'}
                   InputProps={{
                     inputProps: { min: 0, step: "0.01" },
                     startAdornment: <InputAdornment position="start">$</InputAdornment>,
