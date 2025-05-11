@@ -476,8 +476,7 @@ const TaskDetails = () => {
               <Typography variant="h5" component="h2" sx={{ mb: 3, fontWeight: 600 }}>
                 Assigned Resources
               </Typography>
-              
-              {task.resources && task.resources.length > 0 ? (
+                {task.resources && task.resources.length > 0 ? (
                 <List sx={{ width: '100%', pt: 0 }}>
                   {task.resources.map((resource) => (
                     <ListItem 
@@ -485,25 +484,105 @@ const TaskDetails = () => {
                       sx={{ 
                         px: 0, 
                         py: 1.5,
-                        borderBottom: '1px solid rgba(0,0,0,0.04)'
+                        borderBottom: '1px solid rgba(0,0,0,0.04)',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
                       }}
                     >
-                      <ListItemIcon sx={{ minWidth: '40px' }}>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        width: '100%', 
+                        alignItems: 'center',
+                        mb: 1 
+                      }}>
                         <Avatar 
                           sx={{ 
                             bgcolor: 'primary.light',
-                            width: 32,
-                            height: 32
+                            width: 40,
+                            height: 40,
+                            mr: 1.5
                           }}
                         >
                           {resource.name?.charAt(0).toUpperCase() || 'R'}
                         </Avatar>
-                      </ListItemIcon>
-                      <ListItemText 
-                        primary={resource.name} 
-                        secondary={resource.role}
-                        primaryTypographyProps={{ fontWeight: 500 }}
-                      />
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Typography fontWeight={500} variant="body1">
+                            {resource.name}
+                          </Typography>
+                          <Chip 
+                            label={resource.role} 
+                            size="small" 
+                            sx={{ 
+                              bgcolor: 'rgba(0,0,0,0.04)', 
+                              fontSize: '0.75rem',
+                              height: 22 
+                            }}
+                          />
+                        </Box>
+                        <Tooltip title="View resource details">
+                          <IconButton
+                            size="small"
+                            component={RouterLink}
+                            to={`/resources/${resource.id}`}
+                          >
+                            <PersonIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                      
+                      <Box sx={{ pl: 7, width: '100%' }}>
+                        {resource.hourly_rate && (
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography variant="caption" color="text.secondary">Rate:</Typography>
+                            <Typography variant="caption" fontWeight={500}>
+                              ${resource.hourly_rate}/hr
+                            </Typography>
+                          </Box>
+                        )}
+                        
+                        {resource.availability !== undefined && (
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography variant="caption" color="text.secondary">Availability:</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <Box
+                                sx={{
+                                  width: 50,
+                                  height: 6,
+                                  bgcolor: 'background.paper',
+                                  borderRadius: 5,
+                                  border: '1px solid rgba(0,0,0,0.1)',
+                                  mr: 1
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    width: `${resource.availability}%`,
+                                    height: '100%',
+                                    bgcolor: resource.availability > 70 
+                                      ? 'success.main' 
+                                      : resource.availability > 30 
+                                        ? 'warning.main' 
+                                        : 'error.main',
+                                    borderRadius: 5
+                                  }}
+                                />
+                              </Box>
+                              <Typography variant="caption" fontWeight={500}>
+                                {resource.availability}%
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
+                      
+                        {resource.assigned_hours && (
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography variant="caption" color="text.secondary">Assigned Hours:</Typography>
+                            <Typography variant="caption" fontWeight={500}>
+                              {resource.assigned_hours} hrs
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
                     </ListItem>
                   ))}
                 </List>

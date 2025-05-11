@@ -140,19 +140,19 @@ class Task {
       throw error;
     }
   }
-
   /**
    * Get resources assigned to a task
    * @param {number} taskId - Task ID
-   * @returns {Promise} - List of resources assigned to the task
+   * @returns {Promise} - List of resources assigned to the task with detailed information
    */
   static async getTaskResources(taskId) {
     try {
       const [rows] = await pool.query(`
-        SELECT r.* 
+        SELECT r.*, tr.assigned_hours 
         FROM resources r
         JOIN task_resources tr ON r.id = tr.resource_id
         WHERE tr.task_id = ?
+        ORDER BY r.name
       `, [taskId]);
       return rows;
     } catch (error) {
