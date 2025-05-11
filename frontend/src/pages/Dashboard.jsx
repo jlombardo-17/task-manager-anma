@@ -25,14 +25,14 @@ const statusColors = {
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [dashboardData, setDashboardData] = useState({
+  const [error, setError] = useState(null);  const [dashboardData, setDashboardData] = useState({
     clientsCount: 0,
     projectsCount: 0,
     tasksCount: 0,
     resourcesCount: 0,
     recentProjects: [],
     upcomingTasks: [],
+    recentTasks: [],
     projectsByStatus: [],
     tasksByPriority: []
   });
@@ -50,12 +50,12 @@ const Dashboard = () => {
         
         // Fetch tasks
         const tasks = await tasksAPI.getAll();
-        
-        // Process data
+          // Process data
         const projectsByStatus = processProjectsByStatus(projects);
         const tasksByPriority = processTasksByPriority(tasks);
         const recentProjects = getRecentProjects(projects);
         const upcomingTasks = getUpcomingTasks(tasks);
+        const recentTasks = getRecentTasks(tasks);
         
         setDashboardData({
           clientsCount: clients.length,
@@ -64,6 +64,7 @@ const Dashboard = () => {
           resourcesCount: 0, // Will be implemented later
           recentProjects,
           upcomingTasks,
+          recentTasks,
           projectsByStatus,
           tasksByPriority
         });
@@ -128,8 +129,7 @@ const Dashboard = () => {
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       .slice(0, 5);
   };
-  
-  const getUpcomingTasks = (tasks) => {
+    const getUpcomingTasks = (tasks) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -141,6 +141,13 @@ const Dashboard = () => {
       })
       .sort((a, b) => new Date(a.end_date) - new Date(b.end_date))
       .slice(0, 5);
+  };
+  
+  // Get recently updated tasks
+  const getRecentTasks = (tasks) => {
+    return [...tasks]
+      .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+      .slice(0, 5); // Get top 5 recent tasks
   };
   
   // Format date function

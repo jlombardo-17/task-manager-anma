@@ -18,6 +18,16 @@ import ClientsList from './pages/clients/ClientsList';
 import ClientDetails from './pages/clients/ClientDetails';
 import ClientForm from './pages/clients/ClientForm';
 
+// Project Pages
+import ProjectsList from './pages/projects/ProjectsList';
+import ProjectDetails from './pages/projects/ProjectDetails';
+import ProjectForm from './pages/projects/ProjectForm';
+
+// Task Pages
+import TasksList from './pages/tasks/TasksList';
+import TaskDetails from './pages/tasks/TaskDetails';
+import TaskForm from './pages/tasks/TaskForm';
+
 // Create theme - Enhanced professional theme for accountants
 const theme = createTheme({
   palette: {
@@ -356,9 +366,19 @@ function App() {
                 <Route path="/clients/:id" element={<ClientDetails />} />
                 <Route path="/clients/edit/:id" element={<ClientForm />} />
                 
+                {/* Project Routes */}
+                <Route path="/projects" element={<ProjectsList />} />
+                <Route path="/projects/new" element={<ProjectForm />} />
+                <Route path="/projects/edit/:id" element={<ProjectForm />} />
+                <Route path="/projects/:id" element={<ProjectDetails />} />
+                
+                {/* Task Routes */}
+                <Route path="/tasks" element={<TasksList />} />
+                <Route path="/tasks/new" element={<TaskForm />} />
+                <Route path="/tasks/edit/:id" element={<TaskForm />} />
+                <Route path="/tasks/:id" element={<TaskDetails />} />
+                
                 {/* Future Routes */}
-                {/* <Route path="/projects" element={<Projects />} /> */}
-                {/* <Route path="/tasks" element={<Tasks />} /> */}
                 {/* <Route path="/resources" element={<Resources />} /> */}
                 {/* <Route path="/schedule" element={<Schedule />} /> */}
               </Route>

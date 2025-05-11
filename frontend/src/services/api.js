@@ -123,6 +123,21 @@ export const projectsAPI = {
   getHours: async (id) => {
     const response = await api.get(`/projects/${id}/hours`);
     return response.data;
+  },
+  
+  getResources: async (id) => {
+    const response = await api.get(`/projects/${id}/resources`);
+    return response.data;
+  },
+  
+  updateResources: async (id, resourcesData) => {
+    const response = await api.put(`/projects/${id}/resources`, resourcesData);
+    return response.data;
+  },
+  
+  updateActualCost: async (id, actualCost) => {
+    const response = await api.put(`/projects/${id}/actual-cost`, { actual_cost: actualCost });
+    return response.data;
   }
 };
 

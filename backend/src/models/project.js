@@ -8,26 +8,53 @@ class Project {
    * Create a new project
    * @param {Object} project - Project data
    * @returns {Promise} - Created project
-   */
-  static async create(project) {
+   */  static async create(project) {
     try {
-      const [result] = await pool.query(
-        `INSERT INTO projects 
-        (name, client_id, start_date, end_date, estimated_hours, total_cost, description, status) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          project.name,
-          project.client_id,
-          project.start_date,
-          project.end_date,
-          project.estimated_hours,
-          project.total_cost,
-          project.description,
-          project.status || 'pending'
-        ]
-      );
-      
-      return this.findById(result.insertId);
+      // Start transaction
+      const connection = await pool.getConnection();
+      await connection.beginTransaction();
+
+      try {
+        // Insert project
+        const [result] = await connection.query(
+          `INSERT INTO projects 
+          (name, client_id, start_date, end_date, estimated_hours, estimated_cost, budgeted_cost, actual_cost, description, status) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            project.name,
+            project.client_id,
+            project.start_date,
+            project.end_date,
+            project.estimated_hours,
+            project.estimated_cost,
+            project.budgeted_cost,
+            project.actual_cost || 0,
+            project.description,
+            project.status || 'pending'
+          ]
+        );
+
+        const projectId = result.insertId;
+
+        // If resources are provided, assign them to the project
+        if (project.resources && Array.isArray(project.resources) && project.resources.length > 0) {
+          for (const resource of project.resources) {
+            await connection.query(
+              'INSERT INTO project_resources (project_id, resource_id, assigned_hours) VALUES (?, ?, ?)',
+              [projectId, resource.id, resource.assigned_hours || 0]
+            );
+          }
+        }
+
+        await connection.commit();
+        connection.release();
+        
+        return this.findById(projectId);
+      } catch (error) {
+        await connection.rollback();
+        connection.release();
+        throw error;
+      }
     } catch (error) {
       console.error('Error creating project:', error);
       throw error;
@@ -97,28 +124,58 @@ class Project {
    * @param {number} id - Project ID
    * @param {Object} projectData - New project data
    * @returns {Promise} - Updated project
-   */
-  static async update(id, projectData) {
+   */  static async update(id, projectData) {
     try {
-      await pool.query(
-        `UPDATE projects SET 
-         name = ?, client_id = ?, start_date = ?, end_date = ?, 
-         estimated_hours = ?, total_cost = ?, description = ?, status = ? 
-         WHERE id = ?`,
-        [
-          projectData.name,
-          projectData.client_id,
-          projectData.start_date,
-          projectData.end_date,
-          projectData.estimated_hours,
-          projectData.total_cost,
-          projectData.description,
-          projectData.status,
-          id
-        ]
-      );
-      
-      return this.findById(id);
+      // Start transaction
+      const connection = await pool.getConnection();
+      await connection.beginTransaction();
+
+      try {
+        // Update project
+        await connection.query(
+          `UPDATE projects SET 
+           name = ?, client_id = ?, start_date = ?, end_date = ?, 
+           estimated_hours = ?, estimated_cost = ?, budgeted_cost = ?, 
+           actual_cost = ?, description = ?, status = ? 
+           WHERE id = ?`,
+          [
+            projectData.name,
+            projectData.client_id,
+            projectData.start_date,
+            projectData.end_date,
+            projectData.estimated_hours,
+            projectData.estimated_cost,
+            projectData.budgeted_cost,
+            projectData.actual_cost,
+            projectData.description,
+            projectData.status,
+            id
+          ]
+        );
+
+        // If resources are provided, update project resources
+        if (projectData.resources && Array.isArray(projectData.resources)) {
+          // First, remove existing resource assignments
+          await connection.query('DELETE FROM project_resources WHERE project_id = ?', [id]);
+          
+          // Then, add new resource assignments
+          for (const resource of projectData.resources) {
+            await connection.query(
+              'INSERT INTO project_resources (project_id, resource_id, assigned_hours) VALUES (?, ?, ?)',
+              [id, resource.id, resource.assigned_hours || 0]
+            );
+          }
+        }
+
+        await connection.commit();
+        connection.release();
+        
+        return this.findById(id);
+      } catch (error) {
+        await connection.rollback();
+        connection.release();
+        throw error;
+      }
     } catch (error) {
       console.error(`Error updating project with ID ${id}:`, error);
       throw error;
@@ -154,6 +211,65 @@ class Project {
       return rows[0].total_hours || 0;
     } catch (error) {
       console.error(`Error calculating hours for project ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get resources assigned to a project
+   * @param {number} id - Project ID
+   * @returns {Promise} - List of resources assigned to the project
+   */
+  static async getProjectResources(id) {
+    try {
+      const [rows] = await pool.query(`
+        SELECT r.*, pr.assigned_hours 
+        FROM resources r
+        JOIN project_resources pr ON r.id = pr.resource_id
+        WHERE pr.project_id = ?
+      `, [id]);
+      return rows;
+    } catch (error) {
+      console.error(`Error fetching resources for project ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate project cost based on assigned resources
+   * @param {number} id - Project ID
+   * @returns {Promise} - Calculated cost
+   */
+  static async calculateProjectCost(id) {
+    try {
+      const [rows] = await pool.query(`
+        SELECT SUM(r.hourly_rate * pr.assigned_hours) as calculated_cost 
+        FROM resources r
+        JOIN project_resources pr ON r.id = pr.resource_id
+        WHERE pr.project_id = ?
+      `, [id]);
+      return rows[0].calculated_cost || 0;
+    } catch (error) {
+      console.error(`Error calculating cost for project ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update actual cost of a project
+   * @param {number} id - Project ID
+   * @param {number} cost - Actual cost
+   * @returns {Promise} - Updated project
+   */
+  static async updateActualCost(id, cost) {
+    try {
+      await pool.query(
+        'UPDATE projects SET actual_cost = ? WHERE id = ?',
+        [cost, id]
+      );
+      return this.findById(id);
+    } catch (error) {
+      console.error(`Error updating actual cost for project ID ${id}:`, error);
       throw error;
     }
   }

@@ -52,7 +52,9 @@ CREATE TABLE projects (
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   estimated_hours DECIMAL(10, 2) NOT NULL,
-  total_cost DECIMAL(15, 2) NOT NULL,
+  estimated_cost DECIMAL(15, 2) NOT NULL,
+  budgeted_cost DECIMAL(15, 2) NOT NULL,
+  actual_cost DECIMAL(15, 2) DEFAULT 0,
   description TEXT,
   status ENUM('pending', 'in_progress', 'completed', 'on_hold', 'cancelled') DEFAULT 'pending',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -77,10 +79,21 @@ CREATE TABLE tasks (
   FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
 );
 
+-- Create project_resources junction table
+CREATE TABLE project_resources (
+  project_id INT NOT NULL,
+  resource_id INT NOT NULL,
+  assigned_hours DECIMAL(10, 2) DEFAULT 0,
+  PRIMARY KEY (project_id, resource_id),
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+  FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE
+);
+
 -- Create task_resources junction table
 CREATE TABLE task_resources (
   task_id INT NOT NULL,
   resource_id INT NOT NULL,
+  assigned_hours DECIMAL(10, 2) DEFAULT 0,
   PRIMARY KEY (task_id, resource_id),
   FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
   FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE
@@ -95,6 +108,8 @@ CREATE INDEX idx_tasks_dates ON tasks(start_date, end_date);
 CREATE INDEX idx_tasks_priority ON tasks(priority);
 CREATE INDEX idx_tasks_status ON tasks(status);
 CREATE INDEX idx_resources_role ON resources(role);
+CREATE INDEX idx_project_resources_project_id ON project_resources(project_id);
+CREATE INDEX idx_project_resources_resource_id ON project_resources(resource_id);
 
 -- Insert default admin user (password: admin123)
 INSERT INTO users (username, email, password, role)

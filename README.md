@@ -37,14 +37,23 @@ A full-stack task management application for client projects.
 
 ### Database Setup
 
-1. Create a MySQL database:
-```sql
-CREATE DATABASE task_manager;
+Para instrucciones detalladas sobre la configuración de la base de datos, consulte [db-setup-instructions.md](db-setup-instructions.md).
+
+Opciones rápidas:
+
+1. **Opción automática** (recomendada):
+```bash
+# Desde el directorio backend:
+npm run db:init
 ```
 
-2. Import the database schema:
+2. **Opción manual**:
 ```bash
-mysql -u your_username -p task_manager < backend/src/config/database.sql
+# Crear la base de datos:
+mysql -u root -p -e "CREATE DATABASE task_manager;"
+
+# Importar el esquema:
+mysql -u root -p task_manager < backend/src/config/complete-database.sql
 ```
 
 ### Backend Setup
