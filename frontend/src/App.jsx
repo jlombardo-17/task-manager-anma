@@ -28,6 +28,11 @@ import TasksList from './pages/tasks/TasksList';
 import TaskDetails from './pages/tasks/TaskDetails';
 import TaskForm from './pages/tasks/TaskForm';
 
+// Resource Pages
+import ResourcesList from './pages/resources/ResourcesList';
+import ResourceDetails from './pages/resources/ResourceDetails';
+import ResourceForm from './pages/resources/ResourceForm';
+
 // Create theme - Enhanced professional theme for accountants
 const theme = createTheme({
   palette: {
@@ -378,8 +383,13 @@ function App() {
                 <Route path="/tasks/edit/:id" element={<TaskForm />} />
                 <Route path="/tasks/:id" element={<TaskDetails />} />
                 
+                {/* Resource Routes */}
+                <Route path="/resources" element={<ResourcesList />} />
+                <Route path="/resources/new" element={<ResourceForm />} />
+                <Route path="/resources/:id" element={<ResourceDetails />} />
+                <Route path="/resources/:id/edit" element={<ResourceForm />} />
+                
                 {/* Future Routes */}
-                {/* <Route path="/resources" element={<Resources />} /> */}
                 {/* <Route path="/schedule" element={<Schedule />} /> */}
               </Route>
               

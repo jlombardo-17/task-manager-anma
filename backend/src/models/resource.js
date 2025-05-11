@@ -136,6 +136,28 @@ class Resource {
       throw error;
     }
   }
+
+  /**
+   * Get task assignments for a resource
+   * @param {number} resourceId - Resource ID
+   * @returns {Promise} - List of tasks assigned to the resource
+   */
+  static async getAssignments(resourceId) {
+    try {
+      const [rows] = await pool.query(`
+        SELECT t.*, p.name as project_name
+        FROM tasks t
+        JOIN projects p ON t.project_id = p.id
+        JOIN task_resources tr ON t.id = tr.task_id
+        WHERE tr.resource_id = ?
+        ORDER BY t.start_date ASC
+      `, [resourceId]);
+      return rows;
+    } catch (error) {
+      console.error(`Error fetching assignments for resource ID ${resourceId}:`, error);
+      throw error;
+    }
+  }
 }
 
 module.exports = Resource;

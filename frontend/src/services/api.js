@@ -201,8 +201,8 @@ export const resourcesAPI = {
     return response.data;
   },
   
-  getByRole: async (role) => {
-    const response = await api.get(`/resources/role/${role}`);
+  getAssignments: async (resourceId) => {
+    const response = await api.get(`/resources/${resourceId}/assignments`);
     return response.data;
   },
   
@@ -218,6 +218,10 @@ export const resourcesAPI = {
   
   delete: async (id) => {
     const response = await api.delete(`/resources/${id}`);
+    return response.data;
+  },
+    getByRole: async (role) => {
+    const response = await api.get(`/resources/role/${role}`);
     return response.data;
   }
 };

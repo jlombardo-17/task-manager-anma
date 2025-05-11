@@ -128,6 +128,27 @@ router.put(
 );
 
 /**
+ * @route   GET /api/resources/:id/assignments
+ * @desc    Get task assignments for a specific resource
+ * @access  Private
+ */
+router.get('/:id/assignments', auth, async (req, res) => {
+  try {
+    const resource = await Resource.findById(req.params.id);
+    
+    if (!resource) {
+      return res.status(404).json({ message: 'Resource not found' });
+    }
+    
+    const assignments = await Resource.getAssignments(req.params.id);
+    res.json(assignments);
+  } catch (error) {
+    console.error(`Error fetching assignments for resource with ID ${req.params.id}:`, error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+/**
  * @route   DELETE /api/resources/:id
  * @desc    Delete resource
  * @access  Private
