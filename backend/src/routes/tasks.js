@@ -13,6 +13,18 @@ const router = express.Router();
 router.get('/', auth, async (req, res) => {
   try {
     const tasks = await Task.findAll();
+    
+    // Registro de depuración para verificar los recursos asignados
+    console.log('=== DEBUG: Tareas con recursos ===');
+    tasks.forEach(task => {
+      console.log(`Task ID: ${task.id}, Title: ${task.title}`);
+      console.log(`Resources assigned: ${task.resources ? task.resources.length : 0}`);
+      if (task.resources && task.resources.length > 0) {
+        console.log('Resources:', task.resources.map(r => ({ id: r.id, name: r.name })));
+      }
+    });
+    console.log('===============================');
+    
     res.json(tasks);
   } catch (error) {
     console.error('Error fetching tasks:', error);

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { 
-  AppBar, Toolbar, Typography, IconButton, Drawer, List, ListItem, 
+  AppBar, Toolbar, Typography, IconButton, Drawer, List, ListItem, ListItemButton,
   ListItemIcon, ListItemText, Divider, Box, Avatar, Menu, MenuItem
 } from '@mui/material';
 import { 
@@ -192,34 +192,31 @@ const MainLayout = () => {
           </Box>
           
           <Divider />
-          
-          {/* Menu Items */}
+            {/* Menu Items */}
           <List sx={{ py: 2 }}>
             {menuItems.map((item) => (
-              <ListItem 
-                button 
-                key={item.text} 
-                onClick={() => navigateTo(item.path)}
-                sx={{
-                  py: 1.5,
-                  px: 2,
-                  mx: 1,
-                  mb: 0.5,
-                  borderRadius: '8px',
-                  '&:hover': {
-                    backgroundColor: 'rgba(32, 84, 147, 0.08)', // Light primary color
-                  }
-                }}
-              >
-                <ListItemIcon sx={{ minWidth: '46px' }}>{item.icon}</ListItemIcon>
-                <ListItemText 
-                  primary={item.text} 
-                  primaryTypographyProps={{ 
-                    fontWeight: 500, 
-                    fontSize: '0.95rem',
-                    color: 'text.primary'
+              <ListItem key={item.text} disablePadding sx={{ mb: 0.5, mx: 1 }}>
+                <ListItemButton
+                  onClick={() => navigateTo(item.path)}
+                  sx={{
+                    py: 1.5,
+                    px: 2,
+                    borderRadius: '8px',
+                    '&:hover': {
+                      backgroundColor: 'rgba(32, 84, 147, 0.08)', // Light primary color
+                    }
                   }}
-                />
+                >
+                  <ListItemIcon sx={{ minWidth: '46px' }}>{item.icon}</ListItemIcon>
+                  <ListItemText 
+                    primary={item.text} 
+                    primaryTypographyProps={{ 
+                      fontWeight: 500, 
+                      fontSize: '0.95rem',
+                      color: 'text.primary'
+                    }}
+                  />
+                </ListItemButton>
               </ListItem>
             ))}
           </List>

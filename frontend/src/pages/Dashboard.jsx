@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { 
   Grid, Typography, Paper, Box, CircularProgress, 
-  Card, CardContent, CardActions, Button, Divider, Chip
+  Card, CardContent, CardActions, Button, Divider, Chip, Avatar
 } from '@mui/material';
 import { 
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, 
   CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { clientsAPI, projectsAPI, tasksAPI } from '../services/api';
+import { clientsAPI, projectsAPI, tasksAPI, resourcesAPI } from '../services/api';
 
 // Colors for charts
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
@@ -33,13 +33,13 @@ const Dashboard = () => {
     recentProjects: [],
     upcomingTasks: [],
     recentTasks: [],
+    recentResources: [],
     projectsByStatus: [],
     tasksByPriority: []
   });
   
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
+    const fetchDashboardData = async () => {      try {
         setLoading(true);
         
         // Fetch clients
@@ -50,21 +50,26 @@ const Dashboard = () => {
         
         // Fetch tasks
         const tasks = await tasksAPI.getAll();
-          // Process data
+
+        // Fetch resources
+        const resources = await resourcesAPI.getAll();
+          
+        // Process data
         const projectsByStatus = processProjectsByStatus(projects);
         const tasksByPriority = processTasksByPriority(tasks);
         const recentProjects = getRecentProjects(projects);
         const upcomingTasks = getUpcomingTasks(tasks);
         const recentTasks = getRecentTasks(tasks);
+        const recentResources = getRecentResources(resources);
         
         setDashboardData({
           clientsCount: clients.length,
           projectsCount: projects.length,
-          tasksCount: tasks.length,
-          resourcesCount: 0, // Will be implemented later
+          tasksCount: tasks.length,          resourcesCount: resources.length,
           recentProjects,
           upcomingTasks,
           recentTasks,
+          recentResources,
           projectsByStatus,
           tasksByPriority
         });
@@ -148,6 +153,13 @@ const Dashboard = () => {
     return [...tasks]
       .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
       .slice(0, 5); // Get top 5 recent tasks
+  };
+
+  // Get recently added resources
+  const getRecentResources = (resources) => {
+    return [...resources]
+      .sort((a, b) => new Date(b.created_at || b.updated_at) - new Date(a.created_at || a.updated_at))
+      .slice(0, 5); // Get top 5 recent resources
   };
   
   // Format date function
@@ -690,6 +702,106 @@ const Dashboard = () => {
               ) : (
                 <Box sx={{ py: 3, textAlign: 'center' }}>
                   <Typography color="text.secondary">No upcoming tasks available</Typography>
+                </Box>
+              )}
+            </Paper>
+          </Grid>
+        </Grid>
+        
+        {/* Recent Resources Section */}
+        <Typography variant="h5" component="h2" sx={{ mb: 3, fontWeight: 600 }}>
+          Resource Management
+        </Typography>
+        
+        <Grid container spacing={4} sx={{ mb: 4 }}>
+          <Grid item xs={12}>
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                p: 3,
+                borderRadius: 3,
+                border: '1px solid rgba(0,0,0,0.08)'
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="h6" fontWeight={600} color="text.primary">
+                  Recent Resources
+                </Typography>
+                {dashboardData.recentResources && dashboardData.recentResources.length > 0 && (
+                  <Button 
+                    component={RouterLink} 
+                    to="/resources" 
+                    size="small"
+                    variant="text"
+                    color="primary"
+                  >
+                    View All
+                  </Button>
+                )}
+              </Box>
+              <Divider sx={{ mb: 3 }} />
+              
+              {dashboardData.recentResources && dashboardData.recentResources.length > 0 ? (
+                <Grid container spacing={2}>
+                  {dashboardData.recentResources.map((resource) => (
+                    <Grid item xs={12} sm={6} md={4} key={resource.id}>
+                      <Card 
+                        elevation={0}
+                        sx={{ 
+                          display: 'flex',
+                          alignItems: 'center',
+                          p: 2,
+                          border: '1px solid rgba(0,0,0,0.06)', 
+                          borderRadius: 2,
+                          transition: 'all 0.2s',
+                          '&:hover': { 
+                            borderColor: 'warning.main', 
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.05)' 
+                          }
+                        }}
+                      >
+                        <Avatar 
+                          alt={resource.name} 
+                          sx={{ 
+                            width: 56, 
+                            height: 56, 
+                            bgcolor: 'warning.main',
+                            fontSize: '1.2rem'
+                          }}
+                        >
+                          {resource.name?.charAt(0).toUpperCase()}
+                        </Avatar>
+                        <Box sx={{ ml: 2, flexGrow: 1 }}>
+                          <Typography variant="h6" fontWeight={600}>{resource.name}</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {resource.role}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                            <Typography variant="caption" sx={{ fontWeight: 500, color: 'text.secondary', mr: 0.5 }}>
+                              Rate:
+                            </Typography>
+                            <Typography variant="body2" fontWeight={500}>
+                              ${resource.hourly_rate}/hr
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Button 
+                          size="small" 
+                          component={RouterLink} 
+                          to={`/resources/${resource.id}`}
+                          variant="outlined"
+                          color="warning"
+                          sx={{ ml: 1 }}
+                        >
+                          Details
+                        </Button>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : (
+                <Box sx={{ py: 3, textAlign: 'center' }}>
+                  <Typography color="text.secondary">No resources available</Typography>
                 </Box>
               )}
             </Paper>

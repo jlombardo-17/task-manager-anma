@@ -76,10 +76,9 @@ class Task {
       throw error;
     }
   }
-
   /**
    * Get all tasks
-   * @returns {Promise} - List of all tasks
+   * @returns {Promise} - List of all tasks including assigned resources
    */
   static async findAll() {
     try {
@@ -89,25 +88,43 @@ class Task {
         JOIN projects p ON t.project_id = p.id
         ORDER BY t.start_date
       `);
-      return rows;
+      
+      // Add resources to each task
+      const tasksWithResources = [];
+      for (const task of rows) {
+        task.resources = await this.getTaskResources(task.id);
+        tasksWithResources.push(task);
+      }
+      
+      return tasksWithResources;
     } catch (error) {
       console.error('Error fetching tasks:', error);
       throw error;
     }
   }
-
   /**
    * Get tasks by project ID
    * @param {number} projectId - Project ID
-   * @returns {Promise} - List of tasks for the project
+   * @returns {Promise} - List of tasks for the project including resources
    */
   static async findByProjectId(projectId) {
     try {
-      const [rows] = await pool.query(
-        'SELECT * FROM tasks WHERE project_id = ? ORDER BY start_date',
-        [projectId]
-      );
-      return rows;
+      const [rows] = await pool.query(`
+        SELECT t.*, p.name as project_name 
+        FROM tasks t
+        JOIN projects p ON t.project_id = p.id
+        WHERE t.project_id = ?
+        ORDER BY t.start_date
+      `, [projectId]);
+      
+      // Add resources to each task
+      const tasksWithResources = [];
+      for (const task of rows) {
+        task.resources = await this.getTaskResources(task.id);
+        tasksWithResources.push(task);
+      }
+      
+      return tasksWithResources;
     } catch (error) {
       console.error(`Error fetching tasks for project ID ${projectId}:`, error);
       throw error;
@@ -139,8 +156,7 @@ class Task {
       console.error(`Error fetching task with ID ${id}:`, error);
       throw error;
     }
-  }
-  /**
+  }  /**
    * Get resources assigned to a task
    * @param {number} taskId - Task ID
    * @returns {Promise} - List of resources assigned to the task with detailed information
@@ -154,6 +170,13 @@ class Task {
         WHERE tr.task_id = ?
         ORDER BY r.name
       `, [taskId]);
+      
+      // Registro de depuración
+      console.log(`DEBUG: Task ID ${taskId} has ${rows.length} resources assigned`);
+      if (rows.length > 0) {
+        console.log(`Resource IDs: ${rows.map(r => r.id).join(', ')}`);
+      }
+      
       return rows;
     } catch (error) {
       console.error(`Error fetching resources for task ID ${taskId}:`, error);

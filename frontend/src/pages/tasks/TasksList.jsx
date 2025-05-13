@@ -7,7 +7,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   CircularProgress, Alert, Chip, Tooltip,
   MenuItem, Select, FormControl, InputLabel,
-  Grid, Divider, Card, CardContent
+  Grid, Divider, Card, CardContent, Avatar, AvatarGroup
 } from '@mui/material';
 import { 
   Add as AddIcon,
@@ -66,11 +66,23 @@ const TasksList = () => {
       return () => clearTimeout(timer);
     }
   }, [location, navigate]);
-  
-  const fetchTasks = async () => {
+    const fetchTasks = async () => {
     try {
       setLoading(true);
       const data = await tasksAPI.getAll();
+      
+      // Registro de depuración para verificar los datos recibidos
+      console.log('=== DEBUG: Datos de tareas recibidos ===');
+      console.log(`Total de tareas recibidas: ${data.length}`);
+      data.forEach(task => {
+        console.log(`Task ID: ${task.id}, Title: ${task.title}`);
+        console.log(`Resources: ${task.resources ? task.resources.length : 'no resources'}`);
+        if (task.resources && task.resources.length > 0) {
+          console.log(task.resources);
+        }
+      });
+      console.log('===============================');
+      
       setTasks(data);
       setError(null);
     } catch (error) {
@@ -474,11 +486,11 @@ const TasksList = () => {
           
           <TableContainer sx={{ overflowX: 'auto', width: '100%' }}>
             <Table sx={{ width: '100%' }}>
-              <TableHead>
-                <TableRow>
+              <TableHead>                <TableRow>
                   <TableCell sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Task</TableCell>
                   <TableCell sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Project</TableCell>
                   <TableCell sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Timeline</TableCell>
+                  <TableCell sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Resources</TableCell>
                   <TableCell sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Priority</TableCell>
                   <TableCell sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Status</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>Actions</TableCell>
@@ -540,8 +552,7 @@ const TasksList = () => {
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight={500}>{task.project_name}</Typography>
-                      </TableCell>
-                      <TableCell>
+                      </TableCell>                      <TableCell>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                           <Typography variant="body2" fontWeight={500}>
                             {formatDate(task.start_date)} - {formatDate(task.end_date)}
@@ -552,6 +563,52 @@ const TasksList = () => {
                             </Typography>
                           </Box>
                         </Box>
+                      </TableCell>                      <TableCell>
+                        {task.resources && Array.isArray(task.resources) && task.resources.length > 0 ? (
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <AvatarGroup 
+                              max={3}
+                              sx={{ 
+                                '& .MuiAvatar-root': { 
+                                  width: 28, 
+                                  height: 28, 
+                                  fontSize: '0.8rem',
+                                  borderWidth: 1
+                                } 
+                              }}
+                            >
+                              {task.resources.map(resource => (
+                                <Tooltip 
+                                  key={resource.id || Math.random()} 
+                                  title={resource.name || 'Unknown resource'}
+                                >
+                                  <Avatar 
+                                    alt={resource.name || 'Unknown'} 
+                                    sx={{ 
+                                      bgcolor: 'primary.main',
+                                      fontSize: '0.75rem'
+                                    }}
+                                  >
+                                    {(resource.name && resource.name.charAt(0).toUpperCase()) || 'R'}
+                                  </Avatar>
+                                </Tooltip>
+                              ))}
+                            </AvatarGroup>
+                            <Typography 
+                              variant="caption" 
+                              sx={{ ml: 1 }}
+                              color="text.secondary"
+                            >
+                              {task.resources.length > 1 
+                                ? `${task.resources.length} resources` 
+                                : '1 resource'}
+                            </Typography>
+                          </Box>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">
+                            No resources assigned
+                          </Typography>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Chip 
@@ -626,9 +683,8 @@ const TasksList = () => {
                       </TableCell>
                     </TableRow>
                   ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                ) : (                  <TableRow>
+                    <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
                       {searchTerm || projectFilter || statusFilter || priorityFilter || resourceFilter ? (
                         <Box sx={{ py: 2 }}>
                           <Typography color="text.secondary" sx={{ mb: 1 }}>No tasks match your search criteria.</Typography>
